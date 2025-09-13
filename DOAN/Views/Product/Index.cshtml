@@ -1,0 +1,197 @@
+@model DOAN.Models.ProductListViewModel
+@{
+    ViewData["Title"] = "Sản phẩm";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Bộ lọc</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Search -->
+                    <div class="mb-4">
+                        <h6>Tìm kiếm</h6>
+                        <form method="get" action="@Url.Action("Index")">
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="search" value="@Model.SearchTerm" placeholder="Tìm sản phẩm...">
+                                <button class="btn btn-outline-secondary" type="submit">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            @if (Model.SelectedCategoryId.HasValue)
+                            {
+                                <input type="hidden" name="categoryId" value="@Model.SelectedCategoryId" />
+                            }
+                            <input type="hidden" name="sortBy" value="@Model.SortBy" />
+                            <input type="hidden" name="sortOrder" value="@Model.SortOrder" />
+                        </form>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="mb-4">
+                        <h6>Danh mục</h6>
+                        <div class="list-group list-group-flush">
+                            <a href="@Url.Action("Index", new { search = Model.SearchTerm, sortBy = Model.SortBy, sortOrder = Model.SortOrder })" 
+                               class="list-group-item list-group-item-action @(!Model.SelectedCategoryId.HasValue ? "active" : "")">
+                                Tất cả sản phẩm
+                            </a>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <a href="@Url.Action("Index", new { categoryId = category.Id, search = Model.SearchTerm, sortBy = Model.SortBy, sortOrder = Model.SortOrder })" 
+                                   class="list-group-item list-group-item-action @(Model.SelectedCategoryId == category.Id ? "active" : "")">
+                                    @category.Name
+                                </a>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Sort -->
+                    <div class="mb-4">
+                        <h6>Sắp xếp</h6>
+                        <form method="get" action="@Url.Action("Index")">
+                            <select name="sortBy" class="form-select mb-2">
+                                <option value="name" selected="@(Model.SortBy == "name")">Tên sản phẩm</option>
+                                <option value="price" selected="@(Model.SortBy == "price")">Giá</option>
+                            </select>
+                            <select name="sortOrder" class="form-select mb-2">
+                                <option value="asc" selected="@(Model.SortOrder == "asc")">Tăng dần</option>
+                                <option value="desc" selected="@(Model.SortOrder == "desc")">Giảm dần</option>
+                            </select>
+                            @if (Model.SelectedCategoryId.HasValue)
+                            {
+                                <input type="hidden" name="categoryId" value="@Model.SelectedCategoryId" />
+                            }
+                            <input type="hidden" name="search" value="@Model.SearchTerm" />
+                            <button type="submit" class="btn btn-primary btn-sm w-100">Áp dụng</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9 col-md-8">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        @if (Model.SelectedCategoryId.HasValue)
+                        {
+                            var category = Model.Categories.FirstOrDefault(c => c.Id == Model.SelectedCategoryId);
+                            @category?.Name
+                        }
+                        else
+                        {
+                            <text>Tất cả sản phẩm</text>
+                        }
+                    </h2>
+                    <p class="text-muted">Hiển thị @Model.Products.Count() trong tổng số @Model.TotalProducts sản phẩm</p>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            @if (Model.Products.Any())
+            {
+                <div class="row">
+                    @foreach (var product in Model.Products)
+                    {
+                        <div class="col-lg-4 col-md-6 mb-4">
+                            <div class="card product-card h-100">
+                                <div class="card-img-container position-relative">
+                                    <img src="@product.ImageUrl" class="card-img-top" alt="@product.Name" loading="lazy">
+                                    @if (product.IsOnSale)
+                                    {
+                                        <span class="product-badge sale">-@product.DiscountPercentage%</span>
+                                    }
+                                    @if (product.IsFeatured)
+                                    {
+                                        <span class="product-badge featured">Nổi bật</span>
+                                    }
+                                </div>
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="card-title">@product.Name</h6>
+                                    <p class="card-text text-muted small flex-grow-1">@product.Description</p>
+                                    <div class="price-section mb-3">
+                                        @if (product.IsOnSale)
+                                        {
+                                            <span class="text-decoration-line-through text-muted">@product.Price.ToString("N0") ₫</span>
+                                            <span class="fw-bold text-danger ms-2">@product.FinalPrice.ToString("N0") ₫</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-bold text-primary">@product.FinalPrice.ToString("N0") ₫</span>
+                                        }
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <a href="@Url.Action("Details", new { id = product.Id })" class="btn btn-outline-primary btn-sm">Xem chi tiết</a>
+                                        <button class="btn btn-primary btn-sm add-to-cart" data-product-id="@product.Id">Thêm vào giỏ</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Pagination -->
+                @if (Model.TotalPages > 1)
+                {
+                    <nav aria-label="Product pagination">
+                        <ul class="pagination justify-content-center">
+                            @if (Model.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { 
+                                        page = Model.CurrentPage - 1, 
+                                        categoryId = Model.SelectedCategoryId, 
+                                        search = Model.SearchTerm, 
+                                        sortBy = Model.SortBy, 
+                                        sortOrder = Model.SortOrder 
+                                    })">Trước</a>
+                                </li>
+                            }
+
+                            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@Url.Action("Index", new { 
+                                        page = i, 
+                                        categoryId = Model.SelectedCategoryId, 
+                                        search = Model.SearchTerm, 
+                                        sortBy = Model.SortBy, 
+                                        sortOrder = Model.SortOrder 
+                                    })">@i</a>
+                                </li>
+                            }
+
+                            @if (Model.CurrentPage < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@Url.Action("Index", new { 
+                                        page = Model.CurrentPage + 1, 
+                                        categoryId = Model.SelectedCategoryId, 
+                                        search = Model.SearchTerm, 
+                                        sortBy = Model.SortBy, 
+                                        sortOrder = Model.SortOrder 
+                                    })">Sau</a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4>Không tìm thấy sản phẩm</h4>
+                    <p class="text-muted">Hãy thử tìm kiếm với từ khóa khác hoặc chọn danh mục khác.</p>
+                    <a href="@Url.Action("Index")" class="btn btn-primary">Xem tất cả sản phẩm</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
