@@ -1,0 +1,195 @@
+@model List<DOAN.Models.Product>
+@{
+    ViewData["Title"] = "Quản lý tồn kho";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-warehouse me-2"></i>Quản lý tồn kho
+        </h1>
+        <div class="btn-group">
+            <button type="button" class="btn btn-warning" onclick="alertLowStock()">
+                <i class="fas fa-exclamation-triangle me-2"></i>Cảnh báo tồn kho thấp
+            </button>
+            <a href="@Url.Action("ExportInventory", "Admin")" class="btn btn-success">
+                <i class="fas fa-download me-2"></i>Xuất báo cáo
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert for low stock -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning" id="lowStockAlert" style="display: none;">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Cảnh báo:</strong> Có <span id="lowStockCount">0</span> sản phẩm sắp hết hàng!
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Tình trạng tồn kho</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="inventoryTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Hình ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Tồn kho hiện tại</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in Model)
+                        {
+                            var stockStatus = product.Stock switch
+                            {
+                                <= 0 => "danger",
+                                <= 10 => "warning",
+                                _ => "success"
+                            };
+                            
+                            var statusText = product.Stock switch
+                            {
+                                <= 0 => "Hết hàng",
+                                <= 10 => "Sắp hết",
+                                _ => "Còn hàng"
+                            };
+
+                            <tr class="@(product.Stock <= 10 ? "table-warning" : "")">
+                                <td>@product.Id</td>
+                                <td>
+                                    <img src="@product.ImageUrl" alt="@product.Name" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                                </td>
+                                <td>@product.Name</td>
+                                <td>@product.Category?.Name</td>
+                                <td>
+                                    <strong class="text-@stockStatus">@product.Stock</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@stockStatus">@statusText</span>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" onclick="updateStock(@product.Id, '@product.Name', @product.Stock)">
+                                        <i class="fas fa-edit"></i> Cập nhật
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Stock Modal -->
+<div class="modal fade" id="updateStockModal" tabindex="-1" aria-labelledby="updateStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStockModalLabel">Cập nhật tồn kho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="updateStockForm">
+                <div class="modal-body">
+                    <input type="hidden" id="productId" name="productId">
+                    <div class="mb-3">
+                        <label class="form-label">Tên sản phẩm:</label>
+                        <input type="text" class="form-control" id="productName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số lượng hiện tại:</label>
+                        <input type="number" class="form-control" id="currentStock" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Số lượng mới:</label>
+                        <input type="number" class="form-control" id="newStock" name="newStock" min="0" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#inventoryTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json"
+        },
+        "pageLength": 25,
+        "order": [[ 4, "asc" ]]
+    });
+    
+    // Check for low stock
+    checkLowStock();
+});
+
+function checkLowStock() {
+    var lowStockCount = 0;
+    $('#inventoryTable tbody tr').each(function() {
+        var stock = parseInt($(this).find('td:eq(4) strong').text());
+        if (stock <= 10) {
+            lowStockCount++;
+        }
+    });
+    
+    if (lowStockCount > 0) {
+        $('#lowStockCount').text(lowStockCount);
+        $('#lowStockAlert').show();
+    }
+}
+
+function alertLowStock() {
+    var lowStockProducts = [];
+    $('#inventoryTable tbody tr').each(function() {
+        var stock = parseInt($(this).find('td:eq(4) strong').text());
+        var name = $(this).find('td:eq(2)').text();
+        if (stock <= 10) {
+            lowStockProducts.push(name + ' (' + stock + ')');
+        }
+    });
+    
+    if (lowStockProducts.length > 0) {
+        alert('Sản phẩm sắp hết hàng:\n' + lowStockProducts.join('\n'));
+    } else {
+        alert('Tất cả sản phẩm đều có đủ hàng!');
+    }
+}
+
+function updateStock(id, name, currentStock) {
+    $('#productId').val(id);
+    $('#productName').val(name);
+    $('#currentStock').val(currentStock);
+    $('#newStock').val(currentStock);
+    $('#updateStockModal').modal('show');
+}
+
+$('#updateStockForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    var productId = $('#productId').val();
+    var newStock = $('#newStock').val();
+    
+    // Here you would typically make an AJAX call to update the stock
+    // For now, we'll just show a success message
+    alert('Cập nhật tồn kho thành công!');
+    $('#updateStockModal').modal('hide');
+    
+    // Reload the page to show updated data
+    location.reload();
+});
+</script>

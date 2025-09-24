@@ -1,0 +1,315 @@
+@{
+    ViewData["Title"] = "Báo cáo doanh số";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-chart-line me-2"></i>Báo cáo doanh số
+        </h1>
+        <div class="btn-group">
+            <button type="button" class="btn btn-success" onclick="exportReport()">
+                <i class="fas fa-download me-2"></i>Xuất báo cáo
+            </button>
+            <button type="button" class="btn btn-primary" onclick="refreshReport()">
+                <i class="fas fa-sync me-2"></i>Làm mới
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Bộ lọc báo cáo</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Khoảng thời gian:</label>
+                    <select class="form-select" id="timeRange">
+                        <option value="today">Hôm nay</option>
+                        <option value="week">Tuần này</option>
+                        <option value="month" selected>Tháng này</option>
+                        <option value="quarter">Quý này</option>
+                        <option value="year">Năm nay</option>
+                        <option value="custom">Tùy chỉnh</option>
+                    </select>
+                </div>
+                <div class="col-md-3" id="customDateRange" style="display: none;">
+                    <label class="form-label">Từ ngày:</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-3" id="customDateRange2" style="display: none;">
+                    <label class="form-label">Đến ngày:</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-primary d-block" onclick="generateReport()">
+                        <i class="fas fa-search me-2"></i>Tạo báo cáo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Tổng doanh thu
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalRevenue">₫0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Tổng đơn hàng
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalOrders">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Sản phẩm bán được
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalProducts">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-box fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Giá trị đơn hàng TB
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="avgOrderValue">₫0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-bar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Biểu đồ doanh thu</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Doanh thu theo danh mục</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" width="100%" height="40"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top sản phẩm bán chạy</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="topProductsTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Hạng</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Số lượng bán</th>
+                                    <th>Doanh thu</th>
+                                    <th>Tỷ lệ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1</td>
+                                    <td>iPhone 15 Pro Max</td>
+                                    <td>25</td>
+                                    <td>₫62,500,000</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar" role="progressbar" style="width: 100%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>Samsung Galaxy S24 Ultra</td>
+                                    <td>18</td>
+                                    <td>₫45,000,000</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar" role="progressbar" style="width: 72%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>MacBook Pro M3</td>
+                                    <td>12</td>
+                                    <td>₫36,000,000</td>
+                                    <td>
+                                        <div class="progress">
+                                            <div class="progress-bar" role="progressbar" style="width: 48%"></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function() {
+    generateReport();
+    
+    $('#timeRange').on('change', function() {
+        if ($(this).val() === 'custom') {
+            $('#customDateRange, #customDateRange2').show();
+        } else {
+            $('#customDateRange, #customDateRange2').hide();
+        }
+    });
+});
+
+function generateReport() {
+    // Simulate loading data
+    $('#totalRevenue').text('₫2,500,000');
+    $('#totalOrders').text('45');
+    $('#totalProducts').text('128');
+    $('#avgOrderValue').text('₫55,556');
+    
+    // Generate charts
+    generateRevenueChart();
+    generateCategoryChart();
+}
+
+function generateRevenueChart() {
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+            datasets: [{
+                label: 'Doanh thu (₫)',
+                data: [1200000, 1900000, 3000000, 5000000, 2000000, 3000000, 4500000],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function generateCategoryChart() {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Điện thoại', 'Laptop', 'Phụ kiện', 'Đồng hồ', 'Tablet', 'Gaming'],
+            datasets: [{
+                data: [40, 25, 15, 10, 5, 5],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+}
+
+function exportReport() {
+    alert('Tính năng xuất báo cáo sẽ được triển khai!');
+}
+
+function refreshReport() {
+    location.reload();
+}
+</script>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+</style>

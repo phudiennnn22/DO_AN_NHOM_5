@@ -1,0 +1,163 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
+                </h1>
+                <div class="text-muted">
+                    <i class="fas fa-calendar me-1"></i>@DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card animate__animated animate__fadeInUp">
+                <div class="icon primary">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h3 class="fw-bold">150+</h3>
+                <p class="text-muted mb-0">Tổng sản phẩm</p>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card animate__animated animate__fadeInUp animate__delay-1s">
+                <div class="icon success">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <h3 class="fw-bold">₫2,500,000</h3>
+                <p class="text-muted mb-0">Doanh thu hôm nay</p>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card animate__animated animate__fadeInUp animate__delay-2s">
+                <div class="icon warning">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3 class="fw-bold">12</h3>
+                <p class="text-muted mb-0">Đơn hàng mới</p>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="stat-card animate__animated animate__fadeInUp animate__delay-3s">
+                <div class="icon danger">
+                    <i class="fas fa-star"></i>
+                </div>
+                <h3 class="fw-bold">8</h3>
+                <p class="text-muted mb-0">Đánh giá chờ duyệt</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Thêm sản phẩm nổi bật -->
+            <div class="card shadow mb-4 border-primary">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-plus-circle me-2"></i>Thêm sản phẩm mới
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <p class="text-muted mb-3">Thêm sản phẩm mới vào hệ thống</p>
+                    <a href="@Url.Action("CreateProduct", "Admin")" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus me-2"></i>Thêm sản phẩm
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quản lý nhanh -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quản lý nhanh</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <a href="@Url.Action("Products", "Admin")" class="btn btn-outline-primary btn-block">
+                                <i class="fas fa-mobile-alt me-2"></i>Quản lý sản phẩm
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="@Url.Action("Categories", "Admin")" class="btn btn-outline-secondary btn-block">
+                                <i class="fas fa-th-large me-2"></i>Quản lý danh mục
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="@Url.Action("Inventory", "Admin")" class="btn btn-outline-success btn-block">
+                                <i class="fas fa-boxes me-2"></i>Quản lý tồn kho
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="@Url.Action("SalesReports", "Admin")" class="btn btn-outline-info btn-block">
+                                <i class="fas fa-chart-bar me-2"></i>Báo cáo doanh số
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="@Url.Action("PreOrders", "Admin")" class="btn btn-outline-warning btn-block">
+                                <i class="fas fa-shopping-bag me-2"></i>Đơn đặt hàng trước
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="@Url.Action("Reviews", "Admin")" class="btn btn-outline-secondary btn-block">
+                                <i class="fas fa-comments me-2"></i>Quản lý đánh giá
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-dark btn-block">
+                                <i class="fas fa-home me-2"></i>Về trang chủ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thông tin hệ thống</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center">
+                        <i class="fas fa-server fa-3x text-primary mb-3"></i>
+                        <h5>Hệ thống hoạt động bình thường</h5>
+                        <p class="text-muted">Tất cả dịch vụ đang chạy ổn định</p>
+                        <hr>
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            Cập nhật lần cuối: @DateTime.Now.ToString("HH:mm")
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+</style>
