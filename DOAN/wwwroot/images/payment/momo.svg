@@ -1,0 +1,7 @@
+<svg width="60" height="40" viewBox="0 0 60 40" xmlns="http://www.w.w3.org/2000/svg">
+  <rect width="60" height="40" rx="8" fill="#d82d8b"/>
+  <circle cx="20" cy="20" r="8" fill="white" opacity="0.9"/>
+  <circle cx="20" cy="20" r="5" fill="#d82d8b"/>
+  <circle cx="20" cy="20" r="2" fill="white"/>
+  <text x="40" y="25" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10" font-weight="bold">MoMo</text>
+</svg>

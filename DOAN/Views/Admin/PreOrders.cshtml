@@ -1,0 +1,1141 @@
+@model List<DOAN.Models.PreOrder>
+@{
+    ViewData["Title"] = "Quản lý đơn đặt hàng trước";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="dhp-brand">
+                <span class="dhp-logo">DHP</span>
+                <span class="dhp-text">CỬA HÀNG ĐIỆN TỬ</span>
+            </div>
+            <h1 class="h3 mb-0 custom-header">
+                <i class="fas fa-clock me-2"></i>Quản lý đơn đặt hàng trước
+            </h1>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-info" onclick="filterByStatus('all')">
+                <i class="fas fa-list me-2"></i>Tất cả
+            </button>
+            <button type="button" class="btn btn-warning" onclick="filterByStatus('pending')">
+                <i class="fas fa-hourglass-half me-2"></i>Chờ xử lý
+            </button>
+            <button type="button" class="btn btn-success" onclick="filterByStatus('confirmed')">
+                <i class="fas fa-check me-2"></i>Đã xác nhận
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold custom-text-primary text-uppercase mb-1">
+                                Tổng đơn hàng
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold custom-text-number">@(Model?.Count ?? 4)</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x custom-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold custom-text-warning text-uppercase mb-1">
+                                Chờ xử lý
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold custom-text-number">@(Model?.Count(p => p.Status == PreOrderStatus.Pending) ?? 2)</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hourglass-half fa-2x custom-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold custom-text-success text-uppercase mb-1">
+                                Đã xác nhận
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold custom-text-number">@(Model?.Count(p => p.Status == PreOrderStatus.Confirmed) ?? 1)</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check fa-2x custom-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold custom-text-info text-uppercase mb-1">
+                                Tổng giá trị
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold custom-text-number">₫@((Model?.Sum(p => p.Price * p.Quantity) ?? 145000000).ToString("N0"))</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x custom-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 custom-card-header">
+            <h6 class="m-0 font-weight-bold custom-header-text">DHP - Danh sách đơn đặt hàng trước</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="preOrdersTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Sản phẩm</th>
+                            <th>Số lượng</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày đặt</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var preOrder in Model)
+                            {
+                                var statusClass = preOrder.Status switch
+                                {
+                                    PreOrderStatus.Pending => "warning",
+                                    PreOrderStatus.Confirmed => "success",
+                                    PreOrderStatus.Cancelled => "danger",
+                                    PreOrderStatus.Delivered => "info",
+                                    _ => "secondary"
+                                };
+
+                                <tr>
+                                    <td>
+                                        <strong class="custom-text-highlight">#@preOrder.PreOrderNumber</strong>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong class="custom-text-highlight">@preOrder.CustomerName</strong><br>
+                                            <small class="custom-text-muted">@preOrder.CustomerEmail</small><br>
+                                            <small class="custom-text-muted">@preOrder.CustomerPhone</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong class="custom-text-highlight">@preOrder.Product?.Name</strong><br>
+                                            <small class="custom-text-muted">@preOrder.Product?.Category?.Name</small>
+                                        </div>
+                                    </td>
+                                    <td class="custom-text-number">@preOrder.Quantity</td>
+                                    <td class="custom-text-price">₫@((preOrder.Price * preOrder.Quantity).ToString("N0"))</td>
+                                    <td>
+                                        <span class="badge bg-@statusClass custom-badge">@preOrder.StatusText</span>
+                                    </td>
+                                    <td class="custom-text-date">@preOrder.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-info" onclick="viewPreOrder(@preOrder.Id)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            @if (preOrder.Status == PreOrderStatus.Pending)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-success" onclick="confirmPreOrder(@preOrder.Id)">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="cancelPreOrder(@preOrder.Id)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            }
+                                            @if (preOrder.Status == PreOrderStatus.Confirmed)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-primary" onclick="completePreOrder(@preOrder.Id)">
+                                                    <i class="fas fa-shipping-fast"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <!-- Sample data for demonstration -->
+                            <tr>
+                                <td>
+                                    <strong class="custom-text-highlight">#PO-001</strong>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="custom-text-highlight">Nguyễn Văn An</strong><br>
+                                        <small class="custom-text-muted">nguyenvanan@email.com</small><br>
+                                        <small class="custom-text-muted">0123456789</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="custom-text-highlight">iPhone 15 Pro Max</strong><br>
+                                        <small class="custom-text-muted">Điện thoại</small>
+                                    </div>
+                                </td>
+                                <td class="custom-text-number">2</td>
+                                <td class="custom-text-price">₫50,000,000</td>
+                                <td>
+                                    <span class="badge bg-warning custom-badge">Chờ xử lý</span>
+                                </td>
+                                <td class="custom-text-date">20/12/2024</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-info" onclick="viewPreOrder(1)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-success" onclick="confirmPreOrder(1)">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="cancelPreOrder(1)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong class="custom-text-highlight">#PO-002</strong>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="custom-text-highlight">Trần Thị Bình</strong><br>
+                                        <small class="custom-text-muted">tranthibinh@email.com</small><br>
+                                        <small class="custom-text-muted">0987654321</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="custom-text-highlight">MacBook Pro M3</strong><br>
+                                        <small class="custom-text-muted">Laptop</small>
+                                    </div>
+                                </td>
+                                <td class="custom-text-number">1</td>
+                                <td class="custom-text-price">₫45,000,000</td>
+                                <td>
+                                    <span class="badge bg-success custom-badge">Đã xác nhận</span>
+                                </td>
+                                <td class="custom-text-date">19/12/2024</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-info" onclick="viewPreOrder(2)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-primary" onclick="completePreOrder(2)">
+                                            <i class="fas fa-shipping-fast"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong class="custom-text-highlight">#PO-003</strong>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="custom-text-highlight">Lê Văn Cường</strong><br>
+                                        <small class="custom-text-muted">levancuong@email.com</small><br>
+                                        <small class="custom-text-muted">0369852147</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="custom-text-highlight">AirPods Pro 2</strong><br>
+                                        <small class="custom-text-muted">Phụ kiện</small>
+                                    </div>
+                                </td>
+                                <td class="custom-text-number">3</td>
+                                <td class="custom-text-price">₫18,000,000</td>
+                                <td>
+                                    <span class="badge bg-info custom-badge">Đã giao</span>
+                                </td>
+                                <td class="custom-text-date">18/12/2024</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-info" onclick="viewPreOrder(3)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong class="custom-text-highlight">#PO-004</strong>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="custom-text-highlight">Phạm Thị Dung</strong><br>
+                                        <small class="custom-text-muted">phamthidung@email.com</small><br>
+                                        <small class="custom-text-muted">0527419630</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="custom-text-highlight">Samsung Galaxy S24 Ultra</strong><br>
+                                        <small class="custom-text-muted">Điện thoại</small>
+                                    </div>
+                                </td>
+                                <td class="custom-text-number">1</td>
+                                <td class="custom-text-price">₫32,000,000</td>
+                                <td>
+                                    <span class="badge bg-warning custom-badge">Chờ xử lý</span>
+                                </td>
+                                <td class="custom-text-date">17/12/2024</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-info" onclick="viewPreOrder(4)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-success" onclick="confirmPreOrder(4)">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="cancelPreOrder(4)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PreOrder Details Modal -->
+<div class="modal fade" id="preOrderModal" tabindex="-1" aria-labelledby="preOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="preOrderModalLabel">DHP - Chi tiết đơn đặt hàng trước</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="preOrderDetails">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#preOrdersTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Vietnamese.json"
+        },
+        "pageLength": 25,
+        "order": [[ 6, "desc" ]]
+    });
+});
+
+function filterByStatus(status) {
+    var table = $('#preOrdersTable').DataTable();
+    
+    if (status === 'all') {
+        table.search('').draw();
+    } else {
+        var statusText = status === 'pending' ? 'Pending' : 
+                        status === 'confirmed' ? 'Confirmed' : '';
+        table.search(statusText).draw();
+    }
+}
+
+function viewPreOrder(id) {
+    // Simulate loading preorder details
+    $('#preOrderDetails').html(`
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Thông tin khách hàng:</h6>
+                <p><strong>Tên:</strong> Nguyễn Văn A</p>
+                <p><strong>Email:</strong> nguyenvana@email.com</p>
+                <p><strong>SĐT:</strong> 0123456789</p>
+                <p><strong>Địa chỉ:</strong> 123 Đường ABC, Quận 1, TP.HCM</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Thông tin đơn hàng:</h6>
+                <p><strong>Mã đơn:</strong> #PO-${id}</p>
+                <p><strong>Sản phẩm:</strong> iPhone 15 Pro Max</p>
+                <p><strong>Số lượng:</strong> 1</p>
+                <p><strong>Giá:</strong> ₫2,500,000</p>
+                <p><strong>Trạng thái:</strong> <span class="badge bg-warning">Pending</span></p>
+                <p><strong>Ghi chú:</strong> Giao hàng vào cuối tuần</p>
+            </div>
+        </div>
+    `);
+    
+    $('#preOrderModal').modal('show');
+}
+
+function confirmPreOrder(id) {
+    if (confirm('Bạn có chắc chắn muốn xác nhận đơn hàng này?')) {
+        // Simulate API call
+        alert('Đơn hàng đã được xác nhận!');
+        location.reload();
+    }
+}
+
+function cancelPreOrder(id) {
+    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+        // Simulate API call
+        alert('Đơn hàng đã được hủy!');
+        location.reload();
+    }
+}
+
+function completePreOrder(id) {
+    if (confirm('Bạn có chắc chắn muốn hoàn thành đơn hàng này?')) {
+        // Simulate API call
+        alert('Đơn hàng đã được hoàn thành!');
+        location.reload();
+    }
+}
+</script>
+
+<style>
+/* Simple and clean CSS without complex animations */
+.border-left-primary {
+    border-left: 0.8rem solid #00ffff !important;
+    background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%) !important;
+    color: #000 !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0, 255, 255, 0.6) !important;
+    border: 3px solid #00ffff !important;
+}
+
+.border-left-success {
+    border-left: 0.8rem solid #00ff00 !important;
+    background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%) !important;
+    color: #000 !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0, 255, 0, 0.6) !important;
+    border: 3px solid #00ff00 !important;
+}
+
+.border-left-info {
+    border-left: 0.8rem solid #ff00ff !important;
+    background: linear-gradient(135deg, #ff00ff 0%, #cc00cc 100%) !important;
+    color: #fff !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(255, 0, 255, 0.6) !important;
+    border: 3px solid #ff00ff !important;
+}
+
+.border-left-warning {
+    border-left: 0.8rem solid #ffff00 !important;
+    background: linear-gradient(135deg, #ffff00 0%, #ffcc00 100%) !important;
+    color: #000 !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(255, 255, 0, 0.6) !important;
+    border: 3px solid #ffff00 !important;
+}
+
+/* Card hover effects */
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    transition: all 0.3s ease;
+}
+
+/* Override Bootstrap classes with !important */
+.text-gray-800, .text-gray-300, .text-primary, .text-success, .text-info, .text-warning {
+    color: inherit !important;
+}
+
+/* Custom header styling - SUPER BRIGHT DHP */
+.custom-header {
+    background: linear-gradient(135deg, #00ffff 0%, #ff00ff 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-weight: 900 !important;
+    color: #00ffff !important;
+    text-shadow: 0 0 30px rgba(0, 255, 255, 1) !important;
+    filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.8)) !important;
+    font-size: 2.5rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Force DHP text to be visible */
+.custom-header::before {
+    content: "DHP - " !important;
+    background: linear-gradient(135deg, #ffff00 0%, #ff0000 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 25px rgba(255, 255, 0, 1) !important;
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8)) !important;
+}
+
+/* Animations removed */
+
+/* DHP Brand Styling - SUPER VISIBLE */
+.dhp-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    margin-bottom: 10px !important;
+    padding: 10px 20px !important;
+    background: linear-gradient(135deg, #000000 0%, #1a1a2e 100%) !important;
+    border: 3px solid #00ffff !important;
+    border-radius: 15px !important;
+    box-shadow: 0 0 30px rgba(0, 255, 255, 0.5) !important;
+}
+
+.dhp-logo {
+    font-size: 3rem !important;
+    font-weight: 900 !important;
+    color: #ffff00 !important;
+    text-shadow: 0 0 30px rgba(255, 255, 0, 1) !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.dhp-text {
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+    color: #00ffff !important;
+    text-shadow: 0 0 15px rgba(0, 255, 255, 0.8) !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Simple animations removed to avoid CSS errors */
+
+/* Custom text colors - SUPER CONTRAST */
+.custom-text-primary {
+    color: #000 !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 5px rgba(0,255,255,0.8) !important;
+    font-size: 0.9rem !important;
+}
+
+.custom-text-warning {
+    color: #000 !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 5px rgba(255,255,0,0.8) !important;
+    font-size: 0.9rem !important;
+}
+
+.custom-text-success {
+    color: #000 !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 5px rgba(0,255,0,0.8) !important;
+    font-size: 0.9rem !important;
+}
+
+.custom-text-info {
+    color: #fff !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 5px rgba(255,0,255,0.8) !important;
+    font-size: 0.9rem !important;
+}
+
+.custom-text-number {
+    color: #000 !important;
+    font-weight: 900 !important;
+    font-size: 3rem !important;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8) !important;
+    animation: number-pulse 2s ease-in-out infinite alternate !important;
+}
+
+.custom-icon {
+    color: #fff !important;
+    text-shadow: 0 0 20px rgba(255,255,255,1) !important;
+    filter: drop-shadow(0 0 15px rgba(255,255,255,0.8)) !important;
+    animation: icon-bounce 2s ease-in-out infinite alternate !important;
+}
+
+@@keyframes number-pulse {
+    from { 
+        font-size: 3rem;
+        text-shadow: 0 0 10px rgba(0,0,0,0.8);
+    }
+    to { 
+        font-size: 3.2rem;
+        text-shadow: 0 0 15px rgba(0,0,0,1);
+    }
+}
+
+@@keyframes icon-bounce {
+    from { 
+        transform: scale(1);
+        text-shadow: 0 0 20px rgba(255,255,255,1);
+    }
+    to { 
+        transform: scale(1.1);
+        text-shadow: 0 0 25px rgba(255,255,255,1);
+    }
+}
+
+.custom-card-header {
+    background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%) !important;
+    border: none !important;
+}
+
+.custom-header-text {
+    color: white !important;
+    font-weight: bold !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+/* Dark mode adaptations */
+@@media (prefers-color-scheme: dark) {
+    .custom-header {
+        background: linear-gradient(135deg, #00d4ff 0%, #ff6b9d 100%) !important;
+        text-shadow: 0 0 10px rgba(0,212,255,0.5) !important;
+        filter: drop-shadow(0 0 5px rgba(255,107,157,0.3)) !important;
+        color: #00d4ff !important;
+    }
+    
+    .custom-card-header {
+        background: linear-gradient(135deg, #00d4ff 0%, #ff6b9d 100%) !important;
+    }
+    
+    .custom-icon {
+        text-shadow: 0 0 15px rgba(255,255,255,0.8) !important;
+        filter: drop-shadow(0 0 8px rgba(255,255,255,0.5)) !important;
+    }
+}
+
+/* Button styling - SUPER BRIGHT NEON */
+.btn-info {
+    background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%) !important;
+    border: 3px solid #00ffff !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0,255,255,0.8) !important;
+    animation: btn-glow-info 2s ease-in-out infinite alternate !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #0080ff 0%, #00ffff 100%) !important;
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 12px 35px rgba(0,255,255,1) !important;
+    color: #000 !important;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffff00 0%, #ffcc00 100%) !important;
+    border: 3px solid #ffff00 !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(255,255,0,0.8) !important;
+    animation: btn-glow-warning 2s ease-in-out infinite alternate !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #ffcc00 0%, #ffff00 100%) !important;
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 12px 35px rgba(255,255,0,1) !important;
+    color: #000 !important;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%) !important;
+    border: 3px solid #00ff00 !important;
+    color: #000 !important;
+    font-weight: 900 !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0,255,0,0.8) !important;
+    animation: btn-glow-success 2s ease-in-out infinite alternate !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #00cc00 0%, #00ff00 100%) !important;
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 12px 35px rgba(0,255,0,1) !important;
+    color: #000 !important;
+}
+
+/* Button glow animations */
+@@keyframes btn-glow-info {
+    from { box-shadow: 0 8px 25px rgba(0,255,255,0.8); }
+    to { box-shadow: 0 8px 30px rgba(0,255,255,1), 0 0 20px rgba(0,255,255,0.6); }
+}
+
+@@keyframes btn-glow-warning {
+    from { box-shadow: 0 8px 25px rgba(255,255,0,0.8); }
+    to { box-shadow: 0 8px 30px rgba(255,255,0,1), 0 0 20px rgba(255,255,0,0.6); }
+}
+
+@@keyframes btn-glow-success {
+    from { box-shadow: 0 8px 25px rgba(0,255,0,0.8); }
+    to { box-shadow: 0 8px 30px rgba(0,255,0,1), 0 0 20px rgba(0,255,0,0.6); }
+}
+
+/* Dark mode buttons */
+@@media (prefers-color-scheme: dark) {
+    .btn-info {
+        background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+        border-color: #00d4ff;
+        box-shadow: 0 4px 15px rgba(0,212,255,0.4);
+    }
+    
+    .btn-warning {
+        background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%);
+        border-color: #ffeb3b;
+        box-shadow: 0 4px 15px rgba(255,235,59,0.4);
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%);
+        border-color: #00ff88;
+        box-shadow: 0 4px 15px rgba(0,255,136,0.4);
+    }
+}
+
+/* Table styling - Universal */
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border: 2px solid rgba(0,123,255,0.3);
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%);
+    color: #fff;
+    border: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 10px rgba(0,123,255,0.3);
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+    background: #fff;
+    color: #333;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0,123,255,0.1);
+    transform: scale(1.01);
+    box-shadow: 0 4px 15px rgba(0,123,255,0.2);
+}
+
+.table tbody td {
+    border-color: rgba(0,0,0,0.1);
+}
+
+/* Dark mode table */
+@@media (prefers-color-scheme: dark) {
+    .table {
+        border-color: rgba(0,212,255,0.3);
+        box-shadow: 0 5px 15px rgba(0,212,255,0.2);
+    }
+    
+    .table thead th {
+        background: linear-gradient(135deg, #00d4ff 0%, #ff6b9d 100%);
+        box-shadow: 0 0 10px rgba(0,212,255,0.3);
+        text-shadow: 0 0 5px rgba(255,255,255,0.8);
+    }
+    
+    .table tbody tr {
+        background: rgba(0,0,0,0.7);
+        color: #fff;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(0,212,255,0.2);
+        box-shadow: 0 0 15px rgba(0,212,255,0.3);
+    }
+    
+    .table tbody td {
+        border-color: rgba(255,255,255,0.1);
+    }
+}
+
+/* Badge styling - Universal Colors */
+.badge {
+    padding: 8px 12px;
+    font-size: 0.8em;
+    border-radius: 20px;
+    font-weight: bold;
+    border: 2px solid;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.badge.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%) !important;
+    color: #000 !important;
+    border-color: #ffc107 !important;
+    box-shadow: 0 2px 8px rgba(255,193,7,0.4) !important;
+}
+
+.badge.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%) !important;
+    color: #fff !important;
+    border-color: #28a745 !important;
+    box-shadow: 0 2px 8px rgba(40,167,69,0.4) !important;
+}
+
+.badge.bg-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important;
+    color: #fff !important;
+    border-color: #dc3545 !important;
+    box-shadow: 0 2px 8px rgba(220,53,69,0.4) !important;
+}
+
+.badge.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%) !important;
+    color: #fff !important;
+    border-color: #17a2b8 !important;
+    box-shadow: 0 2px 8px rgba(23,162,184,0.4) !important;
+}
+
+/* Dark mode badges */
+@@media (prefers-color-scheme: dark) {
+    .badge.bg-warning {
+        background: linear-gradient(135deg, #ffeb3b 0%, #ffc107 100%) !important;
+        border-color: #ffeb3b !important;
+        box-shadow: 0 2px 8px rgba(255,235,59,0.5) !important;
+    }
+    
+    .badge.bg-success {
+        background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%) !important;
+        border-color: #00ff88 !important;
+        box-shadow: 0 2px 8px rgba(0,255,136,0.5) !important;
+    }
+    
+    .badge.bg-danger {
+        background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%) !important;
+        border-color: #ff4757 !important;
+        box-shadow: 0 2px 8px rgba(255,71,87,0.5) !important;
+    }
+    
+    .badge.bg-info {
+        background: linear-gradient(135deg, #ff6b9d 0%, #ff4081 100%) !important;
+        border-color: #ff6b9d !important;
+        box-shadow: 0 2px 8px rgba(255,107,157,0.5) !important;
+    }
+}
+
+/* Action buttons */
+.btn-sm {
+    border-radius: 20px;
+    padding: 6px 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-sm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Modal styling */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+/* Force override all Bootstrap text colors */
+* {
+    box-sizing: border-box;
+}
+
+/* Override all Bootstrap classes that might interfere */
+.text-gray-800, .text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700, .text-gray-900 {
+    color: inherit !important;
+}
+
+.text-primary, .text-success, .text-info, .text-warning, .text-danger, .text-secondary {
+    color: inherit !important;
+}
+
+/* Force card backgrounds to show */
+.card {
+    background: transparent !important;
+}
+
+/* Ensure all text in cards is visible */
+.card-body {
+    color: inherit !important;
+}
+
+.card-body * {
+    color: inherit !important;
+}
+
+/* Statistics card icons - Universal */
+.fa-2x {
+    color: #fff !important;
+    text-shadow: 0 0 5px currentColor;
+    transition: all 0.3s ease;
+}
+
+.card:hover .fa-2x {
+    color: #fff !important;
+    transform: scale(1.1);
+    text-shadow: 0 0 10px currentColor;
+}
+
+/* Dark mode icons */
+@@media (prefers-color-scheme: dark) {
+    .fa-2x {
+        text-shadow: 0 0 10px currentColor;
+        filter: drop-shadow(0 0 5px currentColor);
+    }
+    
+    .card:hover .fa-2x {
+        text-shadow: 0 0 20px currentColor;
+        filter: drop-shadow(0 0 10px currentColor);
+    }
+}
+
+/* Container background - SUPER CONTRAST */
+.container-fluid {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%) !important;
+    min-height: 100vh;
+    padding: 20px;
+    border: 3px solid #00ffff !important;
+    box-shadow: 0 0 50px rgba(0,255,255,0.3) !important;
+    animation: container-glow 4s ease-in-out infinite alternate !important;
+}
+
+@@keyframes container-glow {
+    from { 
+        box-shadow: 0 0 50px rgba(0,255,255,0.3);
+        border-color: #00ffff;
+    }
+    to { 
+        box-shadow: 0 0 80px rgba(0,255,255,0.6), 0 0 100px rgba(255,0,255,0.3);
+        border-color: #ff00ff;
+    }
+}
+
+/* Dark mode detection and styling */
+@@media (prefers-color-scheme: dark) {
+    .container-fluid {
+        background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #16213e 100%);
+    }
+}
+
+/* Card body text */
+.card-body .text-xs {
+    color: rgba(255,255,255,0.9) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Animation for page load */
+@@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #007bff 0%, #6f42c1 100%);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #6f42c1 0%, #007bff 100%);
+}
+
+/* Dark mode scrollbar */
+@@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-track {
+        background: #2a2a2a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #00d4ff 0%, #ff6b9d 100%);
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #ff6b9d 0%, #00d4ff 100%);
+    }
+}
+
+/* Additional force overrides */
+h1, h2, h3, h4, h5, h6 {
+    color: inherit !important;
+}
+
+p, span, div {
+    color: inherit !important;
+}
+
+/* Ensure buttons are visible */
+.btn {
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Force table visibility */
+.table td, .table th {
+    border-color: rgba(0,0,0,0.1) !important;
+}
+
+@@media (prefers-color-scheme: dark) {
+    .table td, .table th {
+        border-color: rgba(255,255,255,0.1) !important;
+    }
+}
+
+/* Custom table text styling */
+.custom-text-highlight {
+    color: #fff !important;
+    font-weight: bold !important;
+    text-shadow: 0 0 5px rgba(255,255,255,0.5) !important;
+}
+
+.custom-text-muted {
+    color: rgba(255,255,255,0.7) !important;
+    font-size: 0.85rem !important;
+}
+
+.custom-text-price {
+    color: #00ff00 !important;
+    font-weight: bold !important;
+    font-size: 1.1rem !important;
+    text-shadow: 0 0 8px rgba(0,255,0,0.6) !important;
+}
+
+.custom-text-date {
+    color: #00ffff !important;
+    font-weight: bold !important;
+    text-shadow: 0 0 5px rgba(0,255,255,0.5) !important;
+}
+
+.custom-badge {
+    font-weight: bold !important;
+    padding: 8px 12px !important;
+    border-radius: 20px !important;
+    font-size: 0.8rem !important;
+    animation: badge-pulse 2s ease-in-out infinite alternate !important;
+}
+
+@@keyframes badge-pulse {
+    from { 
+        transform: scale(1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    to { 
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+}
+
+/* Table row hover effects */
+.table tbody tr:hover .custom-text-highlight {
+    color: #00ffff !important;
+    text-shadow: 0 0 10px rgba(0,255,255,0.8) !important;
+}
+
+.table tbody tr:hover .custom-text-price {
+    color: #ffff00 !important;
+    text-shadow: 0 0 10px rgba(255,255,0,0.8) !important;
+}
+
+.table tbody tr:hover .custom-text-date {
+    color: #ff00ff !important;
+    text-shadow: 0 0 10px rgba(255,0,255,0.8) !important;
+}
+
+/* Force table visibility */
+.table tbody td {
+    background: rgba(0,0,0,0.8) !important;
+    color: #fff !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+.table tbody tr:hover td {
+    background: rgba(0,255,255,0.1) !important;
+    transform: scale(1.02) !important;
+    transition: all 0.3s ease !important;
+}
+</style>

@@ -1,0 +1,8 @@
+<svg width="60" height="40" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg">
+  <rect width="60" height="40" rx="8" fill="#007bff"/>
+  <rect x="10" y="12" width="40" height="20" rx="4" fill="white" opacity="0.9"/>
+  <rect x="15" y="17" width="30" height="2" fill="#007bff"/>
+  <rect x="15" y="22" width="25" height="2" fill="#007bff"/>
+  <rect x="15" y="27" width="20" height="2" fill="#007bff"/>
+  <text x="30" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="8" font-weight="bold">BANK</text>
+</svg>
